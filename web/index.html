@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Giftly · demo store</title>
+<style>
+  :root{
+    --bg:#f6f7fb; --card:#fff; --ink:#161a2b; --dim:#6b7192; --line:#e7e9f2;
+    --acc:#5b6cff; --acc2:#8b5bff; --ok:#10b981; --chip:#eef0fa; --shadow:0 6px 24px #1a1f4a12;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+  header{position:sticky;top:0;z-index:20;background:#ffffffd9;backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .bar{max-width:1120px;margin:0 auto;display:flex;align-items:center;gap:18px;padding:14px 20px}
+  .logo{font-weight:800;font-size:1.35rem;letter-spacing:-.03em;background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap}
+  .search{flex:1;position:relative}
+  .search input{width:100%;padding:12px 16px;border:1px solid var(--line);border-radius:12px;font-size:1rem;background:var(--bg);outline:none}
+  .search input:focus{border-color:var(--acc);background:#fff}
+  .cartbtn{position:relative;border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 16px;font-weight:600;cursor:pointer;white-space:nowrap}
+  .badge{position:absolute;top:-8px;right:-8px;background:var(--acc);color:#fff;border-radius:20px;min-width:22px;height:22px;display:grid;place-items:center;font-size:.75rem;padding:0 6px}
+  main{max-width:1120px;margin:0 auto;padding:26px 20px 80px}
+  h2{font-size:1.15rem;margin:30px 4px 14px;letter-spacing:-.01em}
+  .shelf{display:flex;gap:14px;overflow-x:auto;padding:4px 4px 12px;scroll-snap-type:x mandatory}
+  .shelf .card{flex:0 0 190px;scroll-snap-align:start}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow);transition:transform .12s ease}
+  .card:hover{transform:translateY(-3px)}
+  .thumb{height:120px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:1.6rem;position:relative}
+  .fire{position:absolute;top:8px;left:8px;background:#fff;color:#e0322b;border-radius:20px;font-size:.72rem;font-weight:700;padding:3px 8px}
+  .cbody{padding:12px 13px 14px;display:flex;flex-direction:column;gap:9px;flex:1}
+  .name{font-size:.9rem;line-height:1.25;min-height:2.4em;overflow:hidden}
+  .row{display:flex;align-items:center;justify-content:space-between;margin-top:auto}
+  .price{font-weight:800}
+  .add{border:none;background:var(--acc);color:#fff;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer;font-size:.85rem}
+  .add:active{transform:scale(.96)}
+  .sug{position:absolute;left:0;right:0;top:52px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;display:none;z-index:30}
+  .sug div{padding:11px 16px;cursor:pointer;font-size:.9rem;border-top:1px solid var(--line)}
+  .sug div:first-child{border-top:none}.sug div:hover{background:var(--chip)}
+  .more{display:block;margin:26px auto 0;border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px 26px;font-weight:600;cursor:pointer}
+  .overlay{position:fixed;inset:0;background:#0b0f2a55;opacity:0;pointer-events:none;transition:.2s;z-index:40}
+  .overlay.on{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:380px;max-width:92vw;background:#fff;z-index:50;transform:translateX(100%);transition:transform .22s ease;display:flex;flex-direction:column;box-shadow:-10px 0 40px #0b0f2a22}
+  .drawer.on{transform:none}
+  .dhead{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .dhead b{font-size:1.1rem}
+  .x{border:none;background:none;font-size:1.4rem;cursor:pointer;color:var(--dim)}
+  .ditems{flex:1;overflow:auto;padding:8px 16px}
+  .line{display:flex;gap:12px;align-items:center;padding:12px 4px;border-bottom:1px solid var(--line)}
+  .lthumb{width:46px;height:46px;border-radius:10px;flex:none;display:grid;place-items:center;color:#fff;font-weight:800;font-size:.9rem}
+  .line .n{flex:1;font-size:.85rem;line-height:1.2}
+  .del{border:none;background:none;color:var(--dim);cursor:pointer;font-size:.8rem}
+  .interes{padding:14px 16px;border-top:1px solid var(--line);background:var(--bg)}
+  .interes h3{margin:0 0 10px;font-size:.9rem}
+  .mini{display:flex;gap:10px;align-items:center;padding:8px 0}
+  .mini .mt{width:38px;height:38px;border-radius:8px;flex:none;display:grid;place-items:center;color:#fff;font-weight:800;font-size:.8rem}
+  .mini .mn{flex:1;font-size:.8rem;line-height:1.15}
+  .mini .madd{border:1px solid var(--acc);color:var(--acc);background:#fff;border-radius:8px;padding:5px 9px;font-size:.78rem;font-weight:700;cursor:pointer}
+  .dfoot{padding:16px 20px;border-top:1px solid var(--line)}
+  .tot{display:flex;justify-content:space-between;font-size:1.05rem;font-weight:800;margin-bottom:12px}
+  .buy{width:100%;border:none;background:var(--ok);color:#fff;border-radius:12px;padding:14px;font-weight:800;font-size:1rem;cursor:pointer}
+  .empty{color:var(--dim);text-align:center;padding:40px 10px;font-size:.9rem}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="logo">✦ Giftly</div>
+    <div class="search">
+      <input id="q" placeholder="Search products…" autocomplete="off">
+      <div class="sug" id="sug"></div>
+    </div>
+    <button class="cartbtn" id="openCart">🛒 Cart <span class="badge" id="badge">0</span></button>
+  </div>
+</header>
+
+<main>
+  <h2>🔥 Trending now</h2>
+  <div class="shelf" id="shelf"></div>
+  <h2 id="catTitle">Catalogue</h2>
+  <div class="grid" id="grid"></div>
+  <button class="more" id="more">Load more</button>
+</main>
+
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer">
+  <div class="dhead"><b>Your cart</b><button class="x" id="closeCart">×</button></div>
+  <div class="ditems" id="ditems"></div>
+  <div class="interes" id="interes" style="display:none">
+    <h3>💡 You might also like</h3>
+    <div id="reco"></div>
+  </div>
+  <div class="dfoot">
+    <div class="tot"><span>Total</span><span id="total">£0.00</span></div>
+    <button class="buy">Checkout</button>
+  </div>
+</aside>
+
+<script>
+const cart = new Map();
+const known = new Map();          // code -> product info (to recover price/description when adding from suggestions)
+let page = 1, q = "", tSearch = null;
+const $ = id => document.getElementById(id);
+
+function color(code){ let h=0; for(const c of code) h=(h*31+c.charCodeAt(0))%360; return h; }
+function grad(code){ const h=color(code); return `linear-gradient(135deg,hsl(${h} 70% 62%),hsl(${(h+40)%360} 70% 52%))`; }
+function ini(desc){ return (desc||"?").split(/\s+/).slice(0,2).map(w=>w[0]||"").join("").toUpperCase(); }
+function money(n){ return n==null ? "Price unavailable" : "£"+Number(n).toFixed(2); }
+function guardar(items){ items.forEach(p=>known.set(p.code,p)); return items; }
+
+function esc(s){return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function cardHTML(p, viral){
+  return `<div class="card">
+    <div class="thumb" style="background:${grad(p.code)}">${viral?'<span class="fire">🔥 trending</span>':''}${esc(ini(p.desc))}</div>
+    <div class="cbody">
+      <div class="name">${esc(p.desc)}</div>
+      <div class="row"><span class="price">${money(p.price)}</span>
+        <button class="add" data-code="${esc(p.code)}">Add</button></div>
+    </div></div>`;
+}
+
+async function cargarVirales(){
+  const items = guardar(await (await fetch('/api/virales?n=10')).json());
+  $('shelf').innerHTML = items.map(p=>cardHTML(p,true)).join('');
+}
+async function cargarCatalogo(reset){
+  if(reset){ page=1; $('grid').innerHTML=''; }
+  const data = await (await fetch(`/api/catalogo?q=${encodeURIComponent(q)}&page=${page}&size=24`)).json();
+  guardar(data.items);
+  $('grid').insertAdjacentHTML('beforeend', data.items.map(p=>cardHTML(p,false)).join(''));
+  $('catTitle').textContent = q ? `Results for “${q}” (${data.total})` : 'Catalogue';
+  $('more').style.display = (page*data.size < data.total) ? 'block' : 'none';
+}
+
+document.addEventListener('click', e=>{
+  const add = e.target.closest('.add,.madd');
+  if(add) addToCart(add.dataset.code);
+});
+function addToCart(code){
+  const it = cart.get(code);
+  if(it){ it.qty++; render(); return; }
+  const f = known.get(code) || {code, desc:code, price:null};
+  cart.set(code, {code:f.code, desc:f.desc, price:f.price, qty:1});
+  render(); openCart();
+}
+function render(){
+  let count=0, total=0;
+  const rows=[...cart.values()].map(it=>{
+    count+=it.qty; total+=it.qty*(it.price??0);
+    return `<div class="line">
+      <div class="lthumb" style="background:${grad(it.code)}">${esc(ini(it.desc))}</div>
+      <div class="n">${esc(it.desc)}<br><small>${it.qty} × ${money(it.price)}</small></div>
+      <button class="del" data-del="${esc(it.code)}">remove</button></div>`;
+  });
+  $('ditems').innerHTML = rows.length ? rows.join('') : '<div class="empty">Your cart is empty.<br>Add products to see recommendations here.</div>';
+  $('badge').textContent = count;
+  $('total').textContent = money(total);
+  recomendarCarrito();
+}
+$('ditems').addEventListener('click', e=>{
+  const d=e.target.closest('[data-del]'); if(!d) return;
+  cart.delete(d.dataset.del); render();
+});
+
+async function recomendarCarrito(){
+  const codes=[...cart.keys()];
+  if(!codes.length){ $('interes').style.display='none'; return; }
+  const items = guardar(await (await fetch('/api/recomendar_carrito?codes='+encodeURIComponent(codes.join(','))+'&k=6')).json());
+  if(!items.length){ $('interes').style.display='none'; return; }
+  $('interes').style.display='block';
+  $('reco').innerHTML=items.map(p=>`<div class="mini">
+     <div class="mt" style="background:${grad(p.code)}">${esc(ini(p.desc))}</div>
+     <div class="mn">${esc(p.desc)}<br><small>${money(p.price)}</small></div>
+     <button class="madd" data-code="${esc(p.code)}">+</button></div>`).join('');
+}
+
+$('q').addEventListener('input', ()=>{
+  clearTimeout(tSearch);
+  tSearch=setTimeout(async ()=>{
+    q=$('q').value.trim();
+    if(q.length>=2){
+      const d=await (await fetch('/api/catalogo?q='+encodeURIComponent(q)+'&page=1&size=6')).json();
+      guardar(d.items);
+      $('sug').innerHTML=d.items.map(p=>`<div data-code="${esc(p.code)}">${esc(p.desc)}</div>`).join('');
+      $('sug').style.display=d.items.length?'block':'none';
+    } else $('sug').style.display='none';
+    cargarCatalogo(true);
+  },220);
+});
+$('sug').addEventListener('click', e=>{
+  const d=e.target.closest('[data-code]'); if(!d) return;
+  $('q').value=d.textContent; q=d.textContent; $('sug').style.display='none'; cargarCatalogo(true);
+});
+document.addEventListener('click',e=>{ if(!e.target.closest('.search')) $('sug').style.display='none'; });
+
+$('more').addEventListener('click', ()=>{ page++; cargarCatalogo(false); });
+function openCart(){ $('drawer').classList.add('on'); $('overlay').classList.add('on'); }
+function closeCart(){ $('drawer').classList.remove('on'); $('overlay').classList.remove('on'); }
+$('openCart').addEventListener('click', openCart);
+$('closeCart').addEventListener('click', closeCart);
+$('overlay').addEventListener('click', closeCart);
+
+cargarVirales(); cargarCatalogo(true); render();
+</script>
+</body>
+</html>

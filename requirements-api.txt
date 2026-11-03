@@ -1,0 +1,3 @@
+# Minimal runtime for the demo API (used by the API Docker image and CI).
+fastapi>=0.110,<1
+uvicorn>=0.27,<1
