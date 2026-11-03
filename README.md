@@ -1,161 +1,428 @@
-# Graph-based product recommender — NetworkX, Leiden & Neo4j
 
-A graph-based recommendation system built around real retail transactions, compared
-across two graph technology stacks, with an interactive demo store powered by FastAPI.
+# Graph-Based Product Recommender
 
-> **Portfolio overview:** two Python/graph implementations, offline evaluation,
-> a Cypher-based Neo4j version, and an HTTP API + browser demo. The original
-> dataset is public UCI data, **not proprietary customer data**. A separate tiny
-> **synthetic** dataset drives the immediately runnable demo.
+**NetworkX · Louvain & Leiden · Neo4j Graph Data Science · FastAPI · Docker**
 
-## Visual overview
+An end-to-end graph-based recommendation system developed using real retail transaction data. The project explores two complementary graph technologies, **NetworkX and Neo4j**, to model product relationships, detect communities and generate personalised product recommendations.
 
-![NetworkX product community visualisation from the exploratory notebook](assets/networkx_community_visualization.png)
+It brings together graph analytics, recommendation algorithms, reproducible experimentation and backend development, demonstrating how data-driven models can be integrated into practical applications through a FastAPI-powered interactive store.
 
-*Community visualisation produced in the original exploratory analysis.*
+## Visual Overview
 
-## Why this project
+![Product communities identified using NetworkX](assets/networkx_community_visualization.png)
 
-Given a product in a shopping basket, which other products are worth suggesting?
-The system represents products as nodes and their co-occurrence in orders as weighted
-edges. Community detection captures product clusters; edge-level similarity ranks
-candidate products within those clusters.
+*Visualisation of product communities identified through graph analysis.*
 
-## Two implementations
+## Project Overview
+
+### The Problem
+
+In e-commerce, recommending relevant products can improve product discovery and help customers find items that complement their purchases.
+
+Traditional recommendation approaches often rely on user histories or product popularity. This project explores an alternative: **representing purchasing behaviour as a graph to discover relationships between products**.
+
+The central question is:
+
+> Given a product in a customer's shopping basket, which other products are most relevant to recommend?
+
+### The Approach
+
+The system models purchasing patterns using a weighted, undirected graph:
+
+- **Nodes:** individual products.
+- **Edges:** relationships between products purchased together.
+- **Edge weights:** frequency of co-occurrence across transactions.
+- **Communities:** groups of products with stronger purchasing relationships.
+- **Recommendations:** candidate products ranked using graph-based similarity measures.
+
+Community detection techniques help reveal product clusters, while different ranking strategies identify potentially relevant recommendations.
+
+The project evaluates several approaches against a popularity-based baseline to understand their effectiveness.
+
+## Two Complementary Implementations
+
+The recommendation problem is explored using two graph technology stacks, each offering a different perspective on graph modelling and analysis.
 
 | Capability | NetworkX / Python | Neo4j / Graph Data Science |
 |---|---|---|
-| Graph creation | Co-purchase edges built from training invoices | Batch-loaded `Product` nodes and `BOUGHT_WITH` edges |
-| Community detection | **Louvain**, with **Leiden** analysis/refinement using igraph | **GDS Louvain** |
-| Ranking | Co-occurrence weight, **Jaccard** and **Lift** | **Cypher** recommendation query |
-| Validation | Invoice holdout, Hit@5 / Precision@5 / Recall@5 / Coverage | Compare graph partitions using **ARI** and **NMI** |
-| Role | Experimentation & model evaluation | Graph database integration & querying |
+| Graph construction | Co-purchase relationships from transaction data | Product nodes and `BOUGHT_WITH` relationships |
+| Community detection | Louvain and Leiden | GDS Louvain |
+| Recommendation methods | Co-occurrence weight, Jaccard and Lift | Cypher-based recommendation queries |
+| Evaluation | Hit@5, Precision@5, Recall@5 and Coverage | Community comparison using ARI and NMI |
+| Main focus | Algorithm development and experimentation | Graph database modelling and querying |
 
-Both are covered in `notebooks/02_networkx_leiden_neo4j.ipynb`. The initial, simpler
-NetworkX exploration is kept in `notebooks/01_exploratory_networkx.ipynb`: it uses
-product descriptions as nodes and is a qualitative baseline, **not** the source of the
-reported metrics.
+### 1. NetworkX and Leiden
 
-## Results (reproduced 3 Nov 2026, corrected evaluation)
+The Python implementation focuses on analysing product relationships and evaluating recommendation strategies.
 
-Re-run end to end on the full UCI dataset (541,909 rows → 2,560 products and 104,235
-edges in the pruned training graph). All methods are evaluated on the **same 3,633
-held-out baskets**: the seed is excluded, an empty list counts as a miss, and the
-popularity baseline is restricted to the same evaluable catalogue.
+It covers:
+
+- Transaction preprocessing and graph construction.
+- Weighted co-purchase relationships.
+- Louvain and Leiden community detection.
+- Recommendation ranking using co-occurrence weight, Jaccard similarity and Lift.
+- Offline evaluation with held-out transactions.
+- Comparison against a popularity-based baseline.
+
+### 2. Neo4j and Graph Data Science
+
+The Neo4j implementation explores the same graph problem using a graph database.
+
+It includes:
+
+- Graph modelling with product nodes and relationships.
+- Data loading into Neo4j.
+- Community detection using Graph Data Science.
+- Recommendation queries written in Cypher.
+- Comparison of community structures across implementations.
+
+Together, both approaches provide experience with in-memory graph analysis and graph database technologies.
+
+### Notebooks
+
+The project includes two notebooks:
+
+- **`01_exploratory_networkx.ipynb`** — Exploratory analysis of product relationships, graph structures and recommendation strategies using NetworkX.
+- **`02_networkx_leiden_neo4j.ipynb`** — Extended implementation covering graph construction, community detection, recommendation evaluation and integration with Neo4j.
+
+The exploratory notebook uses product descriptions as nodes to investigate graph behaviour. The quantitative recommendation results presented below come from the extended implementation.
+
+## Experimental Results
+
+The recommendation algorithms were evaluated using the **Online Retail dataset from the UCI Machine Learning Repository**.
+
+### Dataset and Evaluation
+
+| Property | Value |
+|---|---|
+| Original dataset | 541,909 transaction records |
+| Products in the pruned training graph | 2,560 |
+| Graph edges | 104,235 |
+| Evaluated test baskets | 3,633 |
+| Evaluation | Invoice-level holdout |
+| Baseline | Product popularity |
+
+All recommendation methods were evaluated using the same eligible test baskets and product catalogue.
+
+The evaluation excludes the input product from the recommendations and counts empty recommendation lists as unsuccessful predictions.
+
+### Recommendation Performance
 
 | Method | Hit@5 | Precision@5 | Recall@5 | Coverage |
-|---|---|---|---|---|
+|---|---:|---:|---:|---:|
 | Co-occurrence weight | 0.474 | 0.162 | 0.076 | 0.281 |
-| **Jaccard** | **0.484** | **0.166** | **0.079** | 0.346 |
+| **Jaccard similarity** | **0.484** | **0.166** | **0.079** | 0.346 |
 | Lift | 0.384 | 0.125 | 0.067 | **0.430** |
 | Popularity baseline | 0.135 | 0.036 | 0.006 | 0.002 |
 
-![Graph recommenders vs popularity baseline, comparable evaluation](assets/offline_metrics_comparable.png)
+![Recommendation evaluation results](assets/offline_metrics_comparable.png)
 
-Community detection on the same graph: NetworkX Louvain 40 communities (Q = 0.301),
-Leiden 37 (Q = 0.301); refining the 8 largest Louvain communities with Leiden yields
-105 finer communities (Q = 0.230). The executed notebook is committed with its outputs.
+### Key Findings
 
-**Neo4j comparison (historical run):** GDS Louvain Q = 0.302 vs NetworkX Q = 0.301,
-ARI = 0.681 and NMI = 0.700 on 2,560 shared products. Neo4j was not available for the
-published re-run, so these figures come from the original execution; reproduce them
-with the `analysis` Docker Compose profile.
+**Jaccard similarity achieved the highest Hit@5 (0.484)**, compared with 0.135 for the popularity baseline.
 
-### Evaluation caveats
+This represents approximately **3.6 times the baseline Hit@5** under the same evaluation protocol.
 
-- **Invoice-level random** train/test split: it avoids invoice leakage, but it is not
-  a forward-in-time test and not a live A/B experiment.
-- Only test baskets with at least two products present in the pruned graph are
-  evaluated (3,633 of 3,650); products unseen in training cannot be recommended.
-- The legacy evaluation cell is kept for transparency; its numbers are almost identical
-  for the graph methods, but its baseline (0.107) could include the seed product.
-- NetworkX and GDS partitions are similar, not identical (Louvain is randomised).
+Other observations include:
 
-## Technology stack
+- Co-occurrence weight achieved competitive recommendation accuracy.
+- Jaccard provided the strongest Hit@5, Precision@5 and Recall@5 among the evaluated methods.
+- Lift achieved the highest catalogue coverage, suggesting a different balance between recommendation relevance and product diversity.
+- Graph-based methods consistently outperformed the popularity baseline in this offline experiment.
 
-**Python**, **Pandas**, **NumPy**, **NetworkX**, **igraph**, **Leidenalg**, **scikit-learn**,
-**Neo4j**, **Graph Data Science**, **Cypher**, **FastAPI**, **Docker Compose**,
-**Jupyter**, **HTML/CSS/JavaScript**, **pytest**.
+These findings illustrate the potential of graph-based approaches for identifying meaningful relationships between products.
 
-## Try the API and demo in minutes — without Neo4j
+## Community Detection Analysis
 
-From this repository root:
+Community detection was performed on the product co-purchase graph using Louvain and Leiden.
+
+| Method | Communities | Modularity (Q) |
+|---|---:|---:|
+| NetworkX Louvain | 40 | 0.301 |
+| Leiden | 37 | 0.301 |
+| Leiden refinement of 8 largest Louvain communities | 105 | 0.230 |
+
+The refinement experiment explores finer-grained product communities, providing an additional perspective on the graph's internal structure.
+
+### NetworkX vs Neo4j
+
+A separate execution compared Louvain community detection across NetworkX and Neo4j Graph Data Science.
+
+| Metric | Result |
+|---|---:|
+| NetworkX modularity | 0.301 |
+| Neo4j GDS modularity | 0.302 |
+| Adjusted Rand Index (ARI) | 0.681 |
+| Normalised Mutual Information (NMI) | 0.700 |
+| Shared products | 2,560 |
+
+The results indicate substantial similarity between the community structures obtained from both implementations, although the partitions are not identical.
+
+These Neo4j results come from a separate execution. The current NetworkX recommendation benchmark was reproduced independently; reproducing the Neo4j comparison requires a running Neo4j instance.
+
+## Evaluation Methodology and Limitations
+
+The evaluation follows a consistent offline protocol:
+
+- Training and test sets are separated at invoice level.
+- All methods use the same eligible test baskets.
+- The input product is excluded from recommendation results.
+- Empty recommendation lists count as misses.
+- The popularity baseline uses the same evaluable catalogue.
+- Only products represented in the training graph can be recommended.
+
+Of the 3,650 held-out baskets, 3,633 met the evaluation criteria.
+
+The experiment uses a random invoice-level split rather than a chronological split. Consequently, the results measure offline recommendation performance and should not be interpreted as evidence of production performance or improvements in customer conversion.
+
+The notebooks provide the experimental implementation, intermediate analysis and evaluation outputs.
+
+## Technology Stack
+
+| Area | Technologies |
+|---|---|
+| Programming | Python |
+| Data processing | Pandas, NumPy |
+| Graph analytics | NetworkX, igraph, Leidenalg |
+| Machine Learning & Evaluation | Scikit-learn, graph algorithms, ranking metrics |
+| Graph databases | Neo4j, Graph Data Science, Cypher |
+| Backend | FastAPI, Uvicorn |
+| Frontend | HTML, CSS, JavaScript |
+| Development & Deployment | Docker, Docker Compose |
+| Experimentation | Jupyter Notebook |
+| Testing | pytest |
+
+## Interactive Recommendation Demo
+
+The project includes a lightweight e-commerce demonstration that allows users to explore the recommendation engine through a browser.
+
+The application uses **FastAPI** to expose recommendation functionality through HTTP endpoints and a web interface.
+
+### Features
+
+- Browse and search the product catalogue.
+- Retrieve popular products.
+- Generate recommendations from a selected product.
+- Generate recommendations from multiple products in a shopping basket.
+- Load recommendation models stored in JSON or compressed JSON format.
+- Run a demonstration using synthetic transactions without configuring Neo4j.
+
+### API Endpoints
+
+| Endpoint | Description |
+|---|---|
+| `GET /api/catalogo` | Search and browse products |
+| `GET /api/virales` | Retrieve popular products |
+| `GET /api/recomendar` | Recommend products from a seed product |
+| `GET /api/recomendar_carrito` | Generate recommendations for a basket |
+| `GET /health` | Application health check |
+
+Example requests:
+
+```http
+GET /api/catalogo?q=mug&page=1&size=24
+GET /api/virales?n=10
+GET /api/recomendar?code=A101&k=5
+GET /api/recomendar_carrito?codes=A101,A102&k=5
+GET /health
+```
+
+## Quick Start
+
+The demonstration can be executed locally without Neo4j.
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/cristinamaragu/graph-based-product-recommender.git
+cd graph-based-product-recommender
+```
+
+### 2. Create a Virtual Environment
 
 ```bash
 python -m venv .venv
-# Activate the environment, then:
+```
+
+Activate the environment.
+
+On Windows:
+
+```bash
+.venv\Scripts\activate
+```
+
+On Linux or macOS:
+
+```bash
+source .venv/bin/activate
+```
+
+### 3. Install Dependencies
+
+```bash
 pip install -r requirements-dev.txt
+```
+
+### 4. Generate the Sample Model
+
+```bash
 python scripts/build_sample_model.py
+```
+
+### 5. Start the API
+
+```bash
 uvicorn api:app --reload
 ```
 
-Visit http://localhost:8000. The `api.py` serves a demo store and these endpoints:
+Open the application at:
 
-- `GET /api/catalogo?q=mug&page=1&size=24`
-- `GET /api/virales?n=10`
-- `GET /api/recomendar?code=A101&k=5`
-- `GET /api/recomendar_carrito?codes=A101,A102&k=5`
-- `GET /health`
+**http://localhost:8000**
 
-The default model in `examples/sample_model.json` is **illustrative and generated from
-invented transactions**, not from the UCI benchmark. A production-size model is exported
-from the evaluated notebook as `artifacts/model.json.gz` and enabled with
-`MODEL_PATH=artifacts/model.json.gz` (after generating it). No arbitrary Python
-`pickle` deserialization is required by the API.
+The sample model is generated from synthetic transactions and is intended to demonstrate the application's functionality independently of the full dataset.
 
-Or run the sample demo with Docker: `docker compose up --build api`. The API image
-is intentionally minimal (FastAPI + Uvicorn only, from `requirements-api.txt`); the
-full analysis stack lives in a separate `Dockerfile.analysis` used by the notebook service.
+### Alternative: Docker
 
-## Reproduce the full experiment
+The demonstration can also be started using Docker Compose:
 
-1. Download the **Online Retail** dataset from UCI and save it as
-   `data/Online_Retail.xlsx`; see [data/README.md](data/README.md).
-2. Install the full stack: `pip install -r requirements.txt`.
-3. Run **`notebooks/02_networkx_leiden_neo4j.ipynb`** in Jupyter. Its first code cell
-   switches to the repository root, so `data/` and `artifacts/` resolve correctly.
-   The NetworkX/Leiden analysis works without Neo4j only if all Python dependencies
-   are installed; the Neo4j section is optional.
-4. To reproduce the Neo4j run: copy `.env.example` to `.env`, set your own unique
-   `NEO4J_PASSWORD` and `JUPYTER_TOKEN`, then run
-   `docker compose --profile analysis up --build neo4j notebook`.
-   The notebook container waits until Neo4j passes its health check.
-   The Neo4j browser is at http://localhost:7474 and Jupyter at http://localhost:8888.
-5. **Warning:** the notebook's Neo4j section runs `MATCH (n) DETACH DELETE n`.
-   Use a **dedicated, disposable database** only.
-6. Run the export cell to create a model file under `artifacts/`. Start the API with
-   that model path to switch from synthetic to UCI-derived recommendations.
-
-
-## Files
-
-```text
-api.py                                  FastAPI endpoint and safe JSON loader
-web/index.html                          Mini-store frontend
-notebooks/01_exploratory_networkx.ipynb NetworkX exploration
-notebooks/02_networkx_leiden_neo4j.ipynb Evaluated NetworkX + Leiden + Neo4j
-scripts/build_sample_model.py           Generate a tiny synthetic example model
-examples/sample_model.json              Included for instant API demo
-data/sample_transactions.csv            Invented demo transactions
-Dockerfile                              Minimal FastAPI image for the demo API
-Dockerfile.analysis                     Full Jupyter/graph stack for the notebooks
-docker-compose.yml                      API service + optional analysis profile
-requirements-api.txt                    API runtime only (FastAPI, Uvicorn)
-requirements.txt                        Full analysis dependencies
-tests/                                  Offline API checks
+```bash
+docker compose up --build api
 ```
 
+The API container uses a lightweight dependency configuration. The complete graph analysis environment is provided separately.
+
+## Reproducing the Full Experiment
+
+The full recommendation experiment can be reproduced using the public UCI dataset.
+
+### 1. Download the Dataset
+
+Download **Online Retail** from the UCI Machine Learning Repository:
+
+https://archive.ics.uci.edu/dataset/352/online+retail
+
+Save the file at:
+
+```text
+data/Online_Retail.xlsx
+```
+
+Additional information is available in `data/README.md`.
+
+### 2. Install Analysis Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Run the Analysis
+
+Open the following notebook in Jupyter:
+
+```text
+notebooks/02_networkx_leiden_neo4j.ipynb
+```
+
+The notebook contains the data preparation, graph construction, community detection, recommendation algorithms and evaluation pipeline.
+
+The NetworkX and Leiden experiments can be executed without a Neo4j server, provided the required Python packages are installed.
+
+### 4. Optional: Neo4j Analysis
+
+The Neo4j implementation requires a running database.
+
+Copy the environment configuration:
+
+```bash
+cp .env.example .env
+```
+
+Set your own `NEO4J_PASSWORD` and `JUPYTER_TOKEN` in the `.env` file.
+
+Start the analysis services:
+
+```bash
+docker compose --profile analysis up --build neo4j notebook
+```
+
+Available interfaces:
+
+- **Neo4j Browser:** http://localhost:7474
+- **Jupyter:** http://localhost:8888
+
+**Important:** The Neo4j notebook contains a database reset operation using `MATCH (n) DETACH DELETE n`. Run it only against a dedicated database containing disposable experiment data.
+
+### 5. Export the Recommendation Model
+
+The evaluated notebook includes an export step that creates a model artifact under:
+
+```text
+artifacts/
+```
+
+The FastAPI application can load the exported model by setting:
+
+```bash
+MODEL_PATH=artifacts/model.json.gz
+```
+
+This allows the application to serve recommendations derived from the UCI dataset instead of the synthetic example.
+
+The API uses JSON-based model artifacts rather than arbitrary Python pickle deserialization.
+
+## Project Structure
+
+```text
+graph-based-product-recommender/
+|
+|-- api.py
+|-- web/
+|   |-- index.html
+|
+|-- notebooks/
+|   |-- 01_exploratory_networkx.ipynb
+|   |-- 02_networkx_leiden_neo4j.ipynb
+|
+|-- scripts/
+|   |-- build_sample_model.py
+|
+|-- examples/
+|   |-- sample_model.json
+|
+|-- data/
+|   |-- README.md
+|   |-- sample_transactions.csv
+|
+|-- assets/
+|   |-- networkx_community_visualization.png
+|   |-- offline_metrics_comparable.png
+|
+|-- tests/
+|
+|-- Dockerfile
+|-- Dockerfile.analysis
+|-- docker-compose.yml
+|-- requirements.txt
+|-- requirements-api.txt
+|-- requirements-dev.txt
+|-- .env.example
+|-- README.md
+```
 
 ## Data, Reproducibility & Deployment
 
-This project is designed to support reproducible experimentation and demonstrate how graph-based recommendation systems can be integrated into practical applications.
+The project combines reproducible experimentation with a functional application prototype.
 
-- **Dataset:** Experiments use the publicly available *Online Retail* dataset from the UCI Machine Learning Repository. Instructions for obtaining and preparing the data are provided in the repository.
-- **Reproducibility:** The notebooks document data preprocessing, graph construction, community detection and recommendation evaluation, including comparisons against a popularity-based baseline.
-- **Demo environment:** The FastAPI application supports synthetic sample transactions and JSON/JSON.gz model artifacts, allowing the recommendation system to be explored without exposing customer information.
-- **Deployment considerations:** The application serves as a functional prototype. Production deployment would require additional measures such as authentication, rate limiting and monitoring.
+- **Public dataset:** The experiments use the *Online Retail* dataset from the UCI Machine Learning Repository.
+- **Reproducibility:** The notebooks document preprocessing, graph construction, recommendation algorithms and comparative evaluation.
+- **Demo data:** Synthetic transactions allow the application to run independently of the original dataset.
+- **Model portability:** JSON and compressed JSON artifacts separate the evaluated recommendation model from the application.
+- **Deployment:** The FastAPI demonstration illustrates how graph-based recommendations can be exposed through an application interface. Production deployment would require additional authentication, rate limiting, security controls and monitoring.
 
-### Dataset Reference
+The architecture separates data analysis, model evaluation and application serving, making it easier to extend or adapt individual components.
+
+## Dataset Reference
 
 Chen, D. (2015). *Online Retail*. UCI Machine Learning Repository.
 
