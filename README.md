@@ -126,10 +126,6 @@ full analysis stack lives in a separate `Dockerfile.analysis` used by the notebo
 6. Run the export cell to create a model file under `artifacts/`. Start the API with
    that model path to switch from synthetic to UCI-derived recommendations.
 
-There is no separate Google-hosted graph implementation in the source ZIP. You can open
-these `.ipynb` files in Google Colab for execution, but that is an execution environment,
-not a third recommendation algorithm. Colab cannot reach a Neo4j instance on your
-laptop's `localhost`; use a reachable authorized database endpoint if needed.
 
 ## Files
 
@@ -149,14 +145,20 @@ requirements.txt                        Full analysis dependencies
 tests/                                  Offline API checks
 ```
 
-## Privacy and publication
 
-- Do not publish the employer's assignment document, internal datasets, or source
-  code unless explicitly authorized. The repository omits the assignment PDF.
-- The sample transactions are synthetic; the UCI dataset is downloaded separately.
-- The original binary pickle was excluded. Only trusted JSON/JSON.gz model files
-  are loaded by the demo API.
-- For public hosting, apply API auth, CORS rules, rate limiting and monitoring.
+## Data, Reproducibility & Deployment
 
-**Dataset citation:** Chen, D. (2015), *Online Retail*, UCI Machine Learning Repository.
-https://doi.org/10.24432/C5BW33 (CC BY 4.0).
+This project is designed to support reproducible experimentation and demonstrate how graph-based recommendation systems can be integrated into practical applications.
+
+- **Dataset:** Experiments use the publicly available *Online Retail* dataset from the UCI Machine Learning Repository. Instructions for obtaining and preparing the data are provided in the repository.
+- **Reproducibility:** The notebooks document data preprocessing, graph construction, community detection and recommendation evaluation, including comparisons against a popularity-based baseline.
+- **Demo environment:** The FastAPI application supports synthetic sample transactions and JSON/JSON.gz model artifacts, allowing the recommendation system to be explored without exposing customer information.
+- **Deployment considerations:** The application serves as a functional prototype. Production deployment would require additional measures such as authentication, rate limiting and monitoring.
+
+### Dataset Reference
+
+Chen, D. (2015). *Online Retail*. UCI Machine Learning Repository.
+
+https://doi.org/10.24432/C5BW33
+
+Dataset licensed under CC BY 4.0.
